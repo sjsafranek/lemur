@@ -20,7 +20,7 @@ func (self HttpServer) Start() {
 
 	bind := fmt.Sprintf(":%v", self.Port)
 
-	self.Router.Use(LoggingMiddleWare, SetHeadersMiddleWare, CORSMiddleWare)
+	self.Router.Use(LoggingMiddleWare(logger), SetHeadersMiddleWare, CORSMiddleWare)
 
 	err := http.ListenAndServe(bind, self.Router)
 	if err != nil {
