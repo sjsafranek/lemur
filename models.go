@@ -6,7 +6,7 @@ import (
 
 type ApiRoute struct {
 	Name        string
-	Method      string
+	Methods     []string
 	Pattern     string
 	HandlerFunc http.HandlerFunc
 }

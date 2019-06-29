@@ -1,4 +1,4 @@
-package main
+package lemur
 
 import (
 	"net/http"
