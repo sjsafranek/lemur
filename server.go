@@ -10,39 +10,47 @@ import (
 
 const DEFAULT_HTTP_PORT = 8080
 
-func NewServer(port int, log ligneous.Log) (*HttpServer, error) {
-	return &HttpServer{Router: mux.NewRouter().StrictSlash(true), Port: port, Log: log}, nil
+func NewServer(log ligneous.Log) (*HttpServer, error) {
+	return &HttpServer{Router: mux.NewRouter().StrictSlash(true), log: log}, nil
 }
 
 type HttpServer struct {
-	Port   int
 	Router *mux.Router
-	Log    ligneous.Log
+	log    ligneous.Log
 }
 
-func (self *HttpServer) AttachHandlers(routes []ApiRoute) {
+func (self *HttpServer) AttachHandlerFuncs(routes []ApiRoute) {
 	for _, route := range routes {
-		self.AttachHandler(route)
+		self.AttachHandlerFunc(route)
 	}
 }
 
-func (self *HttpServer) AttachHandler(route ApiRoute) {
-	var handler http.Handler
-	self.Log.Infof("Attaching HTTP handler for route: %v %v", route.Methods, route.Pattern)
-	handler = route.HandlerFunc
+func (self *HttpServer) AttachHandlerFunc(route ApiRoute) {
+	self.log.Infof("Attaching HTTP handler for route: %v %v", route.Methods, route.Pattern)
 	self.Router.
 		Methods(route.Methods...).
 		Path(route.Pattern).
 		Name(route.Name).
-		Handler(handler)
+		Handler(route.HandlerFunc)
 }
 
-func (self *HttpServer) Listen() {
-	self.Log.Info(fmt.Sprintf("Magic happens on port %v", self.Port))
+func (self *HttpServer) AttachFileServer(path, directory string) {
+	fsvr := http.FileServer(http.Dir(directory))
+	self.Router.
+		PathPrefix(path).
+		Handler(http.StripPrefix(path, fsvr))
+}
 
-	bind := fmt.Sprintf(":%v", self.Port)
+func (self *HttpServer) AttachHandler(path string, handler http.Handler) {
+	self.Router.PathPrefix(path).Handler(handler)
+}
 
-	self.Router.Use(LoggingMiddleWare(self.Log), SetHeadersMiddleWare, CORSMiddleWare)
+func (self *HttpServer) ListenAndServe(port int) {
+	self.log.Info(fmt.Sprintf("Magic happens on port %v", port))
+
+	bind := fmt.Sprintf(":%v", port)
+
+	self.Router.Use(LoggingMiddleWare(self.log), SetHeadersMiddleWare, CORSMiddleWare)
 
 	err := http.ListenAndServe(bind, self.Router)
 	if err != nil {
