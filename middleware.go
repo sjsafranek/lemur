@@ -40,9 +40,11 @@ func LoggingMiddleWare(l ligneous.Log) func(http.Handler) http.Handler {
 			l.Debugf(" In %v %v %v", r.RemoteAddr, r.Method, r.URL)
 
 			// Event Source streams
-			if "text/event-stream" == r.Header["Accept"][0] {
-				next.ServeHTTP(w, r)
-				return
+			if 0 != len(r.Header["Accept"]) {
+				if "text/event-stream" == r.Header["Accept"][0] {
+					next.ServeHTTP(w, r)
+					return
+				}
 			}
 
 			// handle websockets...
