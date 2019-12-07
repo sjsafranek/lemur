@@ -31,7 +31,7 @@ func (self *statusWriter) Write(b []byte) (int, error) {
 }
 
 func LoggingMiddleWare() func(http.Handler) http.Handler {
-// func LoggingMiddleWare(l ligneous.Log) func(http.Handler) http.Handler {
+	// func LoggingMiddleWare(l ligneous.Log) func(http.Handler) http.Handler {
 	// return handler function
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

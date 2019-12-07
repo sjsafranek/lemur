@@ -5,22 +5,17 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	// "github.com/sjsafranek/ligneous"
-			"github.com/sjsafranek/logger"
+	"github.com/sjsafranek/logger"
 )
 
 const DEFAULT_HTTP_PORT = 8080
 
-// func NewServer(log ligneous.Log) (*HttpServer, error) {
-// 	return &HttpServer{Router: mux.NewRouter().StrictSlash(true), log: log}, nil
-// }
 func NewServer() (*HttpServer, error) {
 	return &HttpServer{Router: mux.NewRouter().StrictSlash(true)}, nil
 }
 
 type HttpServer struct {
 	Router *mux.Router
-	// log    ligneous.Log
 }
 
 func (self *HttpServer) AttachHandlerFuncs(routes []ApiRoute) {
