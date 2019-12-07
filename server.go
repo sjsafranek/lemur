@@ -5,18 +5,22 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/sjsafranek/ligneous"
+	// "github.com/sjsafranek/ligneous"
+			"github.com/sjsafranek/logger"
 )
 
 const DEFAULT_HTTP_PORT = 8080
 
-func NewServer(log ligneous.Log) (*HttpServer, error) {
-	return &HttpServer{Router: mux.NewRouter().StrictSlash(true), log: log}, nil
+// func NewServer(log ligneous.Log) (*HttpServer, error) {
+// 	return &HttpServer{Router: mux.NewRouter().StrictSlash(true), log: log}, nil
+// }
+func NewServer() (*HttpServer, error) {
+	return &HttpServer{Router: mux.NewRouter().StrictSlash(true)}, nil
 }
 
 type HttpServer struct {
 	Router *mux.Router
-	log    ligneous.Log
+	// log    ligneous.Log
 }
 
 func (self *HttpServer) AttachHandlerFuncs(routes []ApiRoute) {
@@ -26,7 +30,7 @@ func (self *HttpServer) AttachHandlerFuncs(routes []ApiRoute) {
 }
 
 func (self *HttpServer) AttachHandlerFunc(route ApiRoute) {
-	self.log.Infof("Attaching HTTP handler for route: %v %v", route.Methods, route.Pattern)
+	logger.Infof("Attaching HTTP handler for route: %v %v", route.Methods, route.Pattern)
 	self.Router.
 		Methods(route.Methods...).
 		Path(route.Pattern).
@@ -46,11 +50,11 @@ func (self *HttpServer) AttachHandler(path string, handler http.Handler) {
 }
 
 func (self *HttpServer) ListenAndServe(port int) {
-	self.log.Info(fmt.Sprintf("Magic happens on port %v", port))
+	logger.Info(fmt.Sprintf("Magic happens on port %v", port))
 
 	bind := fmt.Sprintf(":%v", port)
 
-	self.Router.Use(LoggingMiddleWare(self.log), SetHeadersMiddleWare, CORSMiddleWare)
+	self.Router.Use(LoggingMiddleWare(), SetHeadersMiddleWare, CORSMiddleWare)
 
 	err := http.ListenAndServe(bind, self.Router)
 	if err != nil {

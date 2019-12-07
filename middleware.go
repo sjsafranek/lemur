@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/sjsafranek/ligneous"
+	"github.com/sjsafranek/logger"
 )
 
 // https://ndersson.me/post/capturing_status_code_in_net_http/
@@ -30,14 +30,15 @@ func (self *statusWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
-func LoggingMiddleWare(l ligneous.Log) func(http.Handler) http.Handler {
+func LoggingMiddleWare() func(http.Handler) http.Handler {
+// func LoggingMiddleWare(l ligneous.Log) func(http.Handler) http.Handler {
 	// return handler function
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
 
 			// before
-			l.Debugf(" In %v %v %v", r.RemoteAddr, r.Method, r.URL)
+			logger.Debugf(" In %v %v %v", r.RemoteAddr, r.Method, r.URL)
 
 			// Event Source streams
 			if 0 != len(r.Header["Accept"]) {
@@ -63,7 +64,7 @@ func LoggingMiddleWare(l ligneous.Log) func(http.Handler) http.Handler {
 			next.ServeHTTP(&sw, r)
 
 			// end
-			l.Debugf("Out %v %v %v [%v] %v - %v bytes", r.RemoteAddr, r.Method, r.URL, sw.status, time.Since(start), sw.length)
+			logger.Debugf("Out %v %v %v [%v] %v - %v bytes", r.RemoteAddr, r.Method, r.URL, sw.status, time.Since(start), sw.length)
 		})
 	}
 	//.end
