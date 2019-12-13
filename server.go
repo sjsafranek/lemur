@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/sjsafranek/lemur/middleware"
 	"github.com/sjsafranek/logger"
 )
 
@@ -49,7 +50,7 @@ func (self *HttpServer) ListenAndServe(port int) {
 
 	bind := fmt.Sprintf(":%v", port)
 
-	self.Router.Use(LoggingMiddleWare(), SetHeadersMiddleWare, CORSMiddleWare)
+	self.Router.Use(middleware.LoggingMiddleWare, middleware.SetHeadersMiddleWare, middleware.CORSMiddleWare)
 
 	err := http.ListenAndServe(bind, self.Router)
 	if err != nil {
