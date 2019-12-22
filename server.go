@@ -26,7 +26,7 @@ func (self *HttpServer) AttachHandlerFuncs(routes []ApiRoute) {
 }
 
 func (self *HttpServer) AttachHandlerFunc(route ApiRoute) {
-	logger.Debugf("Attaching HTTP handler for route: %v %v", route.Methods, route.Pattern)
+	logger.Tracef("Attaching HTTP handler for route: %v %v", route.Methods, route.Pattern)
 	self.Router.
 		Methods(route.Methods...).
 		Path(route.Pattern).
