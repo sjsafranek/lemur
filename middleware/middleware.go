@@ -37,10 +37,6 @@ func (self *statusWriter) Write(b []byte) (int, error) {
 func LoggingMiddleWare(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-
-		// before
-		logger.Debugf(" In %v %v %v", r.RemoteAddr, r.Method, r.URL)
-
 		// Event Source streams
 		if 0 != len(r.Header["Accept"]) {
 			if "text/event-stream" == r.Header["Accept"][0] {
@@ -65,7 +61,7 @@ func LoggingMiddleWare(next http.Handler) http.Handler {
 		next.ServeHTTP(&sw, r)
 
 		// end
-		logger.Debugf("Out %v %v %v [%v] %v - %v bytes", r.RemoteAddr, r.Method, r.URL, sw.status, time.Since(start), sw.length)
+		logger.Debugf("%v %v %v [%v] %v - %v bytes", r.RemoteAddr, r.Method, r.URL, sw.status, time.Since(start), sw.length)
 	})
 }
 
