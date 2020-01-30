@@ -34,13 +34,22 @@ func (self *statusWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
+func (self *statusWriter) Flush() {
+	self.ResponseWriter.(http.Flusher).Flush()
+}
+
 func LoggingMiddleWare(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		logger.Debugf("[HTTPAPI] IN  %v %v %v - %v bytes", r.RemoteAddr, r.Method, r.URL.Path, r.ContentLength)
+
 		start := time.Now()
+
 		// Event Source streams
 		if 0 != len(r.Header["Accept"]) {
 			if "text/event-stream" == r.Header["Accept"][0] {
 				next.ServeHTTP(w, r)
+				logger.Debugf("[HTTPAPI] OUT %v %v %v [%v] %v", r.RemoteAddr, r.Method, r.URL, 200, time.Since(start))
 				return
 			}
 		}
@@ -49,6 +58,7 @@ func LoggingMiddleWare(next http.Handler) http.Handler {
 		for _, header := range r.Header["Upgrade"] {
 			if header == "websocket" {
 				next.ServeHTTP(w, r)
+				logger.Debugf("[HTTPAPI] OUT %v %v %v [%v] %v", r.RemoteAddr, r.Method, r.URL, 200, time.Since(start))
 				return
 			}
 		}
@@ -61,7 +71,7 @@ func LoggingMiddleWare(next http.Handler) http.Handler {
 		next.ServeHTTP(&sw, r)
 
 		// end
-		logger.Debugf("%v %v %v [%v] %v - %v bytes", r.RemoteAddr, r.Method, r.URL, sw.status, time.Since(start), sw.length)
+		logger.Debugf("[HTTPAPI] OUT %v %v %v [%v] %v - %v bytes", r.RemoteAddr, r.Method, r.URL, sw.status, time.Since(start), sw.length)
 	})
 }
 
