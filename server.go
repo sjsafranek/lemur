@@ -1,59 +1,49 @@
 package lemur
 
 import (
-	"fmt"
+	"io/ioutil"
 	"net/http"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/schollz/httpfileserver"
 	"github.com/sjsafranek/lemur/middleware"
 	"github.com/sjsafranek/logger"
 )
 
-const DEFAULT_HTTP_PORT = 8080
-
-func NewServer() (*HttpServer, error) {
-	return &HttpServer{Router: mux.NewRouter().StrictSlash(true)}, nil
+func Vars(r *http.Request) map[string]string {
+	return mux.Vars(r)
 }
 
-type HttpServer struct {
-	Router *mux.Router
-}
-
-func (self *HttpServer) AttachHandlerFuncs(routes []ApiRoute) {
-	for _, route := range routes {
-		self.AttachHandlerFunc(route)
+func Body(r *http.Request, clbk func([]byte) error) error {
+	body, err := ioutil.ReadAll(r.Body)
+	if nil != err {
+		return err
 	}
+	defer r.Body.Close()
+	return clbk(body)
 }
 
-func (self *HttpServer) AttachHandlerFunc(route ApiRoute) {
-	logger.Infof("Attaching HTTP handler for route: %v %v", route.Methods, route.Pattern)
-	self.Router.
-		Methods(route.Methods...).
-		Path(route.Pattern).
-		Name(route.Name).
-		Handler(route.HandlerFunc)
+type HttpRouter struct {
+	*mux.Router
 }
 
-func (self *HttpServer) AttachFileServer(path, directory string) {
-	fsvr := http.FileServer(http.Dir(directory))
-	self.Router.
-		PathPrefix(path).
-		Handler(http.StripPrefix(path, fsvr))
+func (self *HttpRouter) AttachFileServer(route, directory string) {
+	self.PathPrefix("/static/").Handler(httpfileserver.New("/static/", directory))
 }
 
-func (self *HttpServer) AttachHandler(path string, handler http.Handler) {
-	self.Router.PathPrefix(path).Handler(handler)
+func (self *HttpRouter) AttachHandlerFunc(pattern string, handler http.HandlerFunc, methods []string) {
+	logger.Info("Attaching HTTP handler for route: ", methods, " ", pattern)
+	self.Methods(methods...).Path(pattern).Handler(handler)
 }
 
-func (self *HttpServer) ListenAndServe(port int) {
-	logger.Info(fmt.Sprintf("Magic happens on port %v", port))
+func New() HttpRouter {
+	// create http router
+	router := mux.NewRouter().StrictSlash(true)
 
-	bind := fmt.Sprintf(":%v", port)
+	// attach middleware
+	router.Use(middleware.LoggingMiddleWare, middleware.SetHeadersMiddleWare, middleware.CORSMiddleWare)
+	handlers.CompressHandler(router)
 
-	self.Router.Use(middleware.LoggingMiddleWare, middleware.SetHeadersMiddleWare, middleware.CORSMiddleWare)
-
-	err := http.ListenAndServe(bind, self.Router)
-	if err != nil {
-		panic(err)
-	}
+	return HttpRouter{router}
 }
